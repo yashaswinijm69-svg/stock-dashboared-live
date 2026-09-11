@@ -72,6 +72,10 @@ st.sidebar.markdown("---")
 st.sidebar.subheader("⚙️ Indicator Settings")
 sma_window = st.sidebar.slider("SMA Window:", min_value=5, max_value=200, value=20, step=5)
 ema_window = st.sidebar.slider("EMA Window:", min_value=5, max_value=200, value=50, step=5)
+show_sma = st.sidebar.checkbox("Show SMA", value=True)
+show_ema = st.sidebar.checkbox("Show EMA", value=True)
+show_rsi = st.sidebar.checkbox("Show RSI", value=True)
+show_macd = st.sidebar.checkbox("Show MACD", value=True)
 
 # Watchlist management section
 st.sidebar.markdown("---")
@@ -226,15 +230,17 @@ if symbol_input:
             row=1, col=1
         )
         
-        fig.add_trace(
-            go.Scatter(x=df.index, y=df["SMA"], name=f"SMA ({sma_window})", line=dict(color="#FF9F1C", width=1.5)),
-            row=1, col=1
-        )
+        if show_sma:
+            fig.add_trace(
+                go.Scatter(x=df.index, y=df["SMA"], name=f"SMA ({sma_window})", line=dict(color="#FF9F1C", width=1.5)),
+                row=1, col=1
+            )
         
-        fig.add_trace(
-            go.Scatter(x=df.index, y=df["EMA"], name=f"EMA ({ema_window})", line=dict(color="#2EC4B6", width=1.5)),
-            row=1, col=1
-        )
+        if show_ema:
+            fig.add_trace(
+                go.Scatter(x=df.index, y=df["EMA"], name=f"EMA ({ema_window})", line=dict(color="#2EC4B6", width=1.5)),
+                row=1, col=1
+            )
         
         # Add alert price line if defined
         if alert_price:
@@ -249,47 +255,49 @@ if symbol_input:
             )
             
         # Plot 2: RSI Chart
-        fig.add_trace(
-            go.Scatter(x=df.index, y=df["RSI"], name="RSI (14)", line=dict(color="#9B5DE5", width=1.5)),
-            row=2, col=1
-        )
-        
-        # Add RSI oversold/overbought guidelines
-        fig.add_trace(
-            go.Scatter(
-                x=[df.index[0], df.index[-1]], y=[70, 70], 
-                mode="lines", name="Overbought (70)", 
-                line=dict(color="#E71D36", dash="dot", width=1),
-                showlegend=False
-            ),
-            row=2, col=1
-        )
-        fig.add_trace(
-            go.Scatter(
-                x=[df.index[0], df.index[-1]], y=[30, 30], 
-                mode="lines", name="Oversold (30)", 
-                line=dict(color="#2EC4B6", dash="dot", width=1),
-                showlegend=False
-            ),
-            row=2, col=1
-        )
+        if show_rsi:
+            fig.add_trace(
+                go.Scatter(x=df.index, y=df["RSI"], name="RSI (14)", line=dict(color="#9B5DE5", width=1.5)),
+                row=2, col=1
+            )
+            
+            # Add RSI oversold/overbought guidelines
+            fig.add_trace(
+                go.Scatter(
+                    x=[df.index[0], df.index[-1]], y=[70, 70], 
+                    mode="lines", name="Overbought (70)", 
+                    line=dict(color="#E71D36", dash="dot", width=1),
+                    showlegend=False
+                ),
+                row=2, col=1
+            )
+            fig.add_trace(
+                go.Scatter(
+                    x=[df.index[0], df.index[-1]], y=[30, 30], 
+                    mode="lines", name="Oversold (30)", 
+                    line=dict(color="#2EC4B6", dash="dot", width=1),
+                    showlegend=False
+                ),
+                row=2, col=1
+            )
         
         # Plot 3: MACD Chart
-        fig.add_trace(
-            go.Scatter(x=df.index, y=df["MACD"], name="MACD", line=dict(color="#011627", width=1.5)),
-            row=3, col=1
-        )
-        fig.add_trace(
-            go.Scatter(x=df.index, y=df["MACD_Signal"], name="Signal", line=dict(color="#E71D36", width=1.2)),
-            row=3, col=1
-        )
-        
-        # MACD Histogram colors (green for positive, red for negative)
-        hist_colors = ["#2EC4B6" if val >= 0 else "#E71D36" for val in df["MACD_Diff"]]
-        fig.add_trace(
-            go.Bar(x=df.index, y=df["MACD_Diff"], name="Histogram", marker_color=hist_colors, showlegend=True),
-            row=3, col=1
-        )
+        if show_macd:
+            fig.add_trace(
+                go.Scatter(x=df.index, y=df["MACD"], name="MACD", line=dict(color="#011627", width=1.5)),
+                row=3, col=1
+            )
+            fig.add_trace(
+                go.Scatter(x=df.index, y=df["MACD_Signal"], name="Signal", line=dict(color="#E71D36", width=1.2)),
+                row=3, col=1
+            )
+            
+            # MACD Histogram colors (green for positive, red for negative)
+            hist_colors = ["#2EC4B6" if val >= 0 else "#E71D36" for val in df["MACD_Diff"]]
+            fig.add_trace(
+                go.Bar(x=df.index, y=df["MACD_Diff"], name="Histogram", marker_color=hist_colors, showlegend=True),
+                row=3, col=1
+            )
         
         # Update styling layout
         fig.update_layout(
