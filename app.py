@@ -51,10 +51,18 @@ st.title("📈 Stock Dashboard Live")
 # -------------------------------------------------------------
 st.sidebar.header("🔍 Search Stock")
 
-# Ticker symbol input
+# Callback function to safely update stock symbol from watchlist click
+def select_symbol(sym):
+    st.session_state["symbol_input"] = sym
+
+# Initialize session state for symbol if not present
+if "symbol_input" not in st.session_state:
+    st.session_state["symbol_input"] = "AAPL"
+
+# Ticker symbol input using session state key
 symbol_input = st.sidebar.text_input(
     "Enter Stock Symbol:", 
-    value="AAPL", 
+    key="symbol_input",
     max_chars=10, 
     help="e.g. AAPL, MSFT, TSLA, GOOG"
 ).strip().upper()
@@ -81,14 +89,14 @@ show_macd = st.sidebar.checkbox("Show MACD", value=True)
 st.sidebar.markdown("---")
 st.sidebar.subheader("⭐ Watchlist Manager")
 
-# Add current symbol to watchlist
+# Form to add/update symbol (uses current symbol_input by default)
 alert_price_input = st.sidebar.number_input(
     f"Set Alert Price for {symbol_input} (Optional):",
     min_value=0.0,
     value=0.0,
     step=0.01,
     format="%.2f",
-    help="Get an alert if the stock price goes above or below this target."
+    help="Set a target price to track alongside this stock."
 )
 
 col1, col2 = st.sidebar.columns(2)
@@ -99,46 +107,37 @@ with col1:
             st.sidebar.success(f"Added {symbol_input} to Watchlist!")
             st.rerun()
         else:
-            st.sidebar.error("Failed to add to watchlist.")
+            st.sidebar.error("Failed to add.")
 
 with col2:
     if st.button("🗑️ Remove"):
         if remove_from_watchlist(symbol_input):
-            st.sidebar.info(f"Removed {symbol_input} from Watchlist.")
+            st.sidebar.info(f"Removed {symbol_input}.")
             st.rerun()
         else:
-            st.sidebar.warning(f"{symbol_input} not in Watchlist.")
+            st.sidebar.warning(f"Not in Watchlist.")
 
 # Render Watchlist entries
 st.sidebar.markdown("### My Watchlist")
 watchlist = get_watchlist()
 if watchlist:
     for sym, alert in watchlist:
-        # Create a clean layout for watchlist items
         cols = st.sidebar.columns([3, 2, 1])
         with cols[0]:
-            # Button with symbol name; clicking updates the search field
-            if st.button(f"📊 {sym}", key=f"wl_btn_{sym}"):
-                # To change symbol_input dynamically, we can use query params or state
-                st.session_state["symbol_input_val"] = sym
-                st.rerun()
+            # Clicking the symbol name updates the search field via session state
+            st.button(f"📊 {sym}", key=f"wl_btn_{sym}", on_click=select_symbol, args=(sym,))
         with cols[1]:
             if alert:
                 st.write(f"${alert:.2f}")
             else:
                 st.write("-")
         with cols[2]:
+            # Delete button for each item
             if st.button("❌", key=f"wl_del_{sym}"):
                 remove_from_watchlist(sym)
                 st.rerun()
 else:
-    st.sidebar.caption("Watchlist is currently empty.")
-
-# Check session state override
-if "symbol_input_val" in st.session_state:
-    symbol_input = st.session_state["symbol_input_val"]
-    # Clear the state so it doesn't lock future typing inputs
-    del st.session_state["symbol_input_val"]
+    st.sidebar.caption("Watchlist is empty.")
 
 # -------------------------------------------------------------
 # Main Application Content
