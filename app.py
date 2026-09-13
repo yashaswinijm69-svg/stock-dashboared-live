@@ -8,6 +8,7 @@ from streamlit_autorefresh import st_autorefresh
 from db import init_db, add_to_watchlist, remove_from_watchlist, get_watchlist
 from data import fetch_stock_data, fetch_ticker_info
 from indicators import compute_sma, compute_ema, compute_rsi, compute_macd
+from alerts import check_and_send_alerts
 
 # Set up page configuration
 st.set_page_config(
@@ -22,6 +23,9 @@ st_autorefresh(interval=60000, key="data_refresh")
 
 # Initialize database tables on startup
 init_db()
+
+# Run price alert checks
+check_and_send_alerts()
 
 # Custom CSS for modern visual style
 st.markdown("""
