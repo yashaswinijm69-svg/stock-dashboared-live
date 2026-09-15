@@ -9,6 +9,7 @@ from db import init_db, add_to_watchlist, remove_from_watchlist, get_watchlist
 from data import fetch_stock_data, fetch_ticker_info
 from indicators import compute_sma, compute_ema, compute_rsi, compute_macd
 from alerts import check_and_send_alerts
+from predictor import predict_stock_price
 
 # Set up page configuration
 st.set_page_config(
@@ -88,6 +89,7 @@ show_sma = st.sidebar.checkbox("Show SMA", value=True)
 show_ema = st.sidebar.checkbox("Show EMA", value=True)
 show_rsi = st.sidebar.checkbox("Show RSI", value=True)
 show_macd = st.sidebar.checkbox("Show MACD", value=True)
+show_forecast = st.sidebar.checkbox("Show Prophet Forecast", value=False)
 
 # Watchlist management section
 st.sidebar.markdown("---")
@@ -316,6 +318,23 @@ if symbol_input:
             margin=dict(l=20, r=20, t=50, b=20)
         )
         
+        # Plot Prophet Forecast if enabled
+        if show_forecast:
+            with st.spinner("Generating 7-day forecast..."):
+                forecast_df = predict_stock_price(df, days=7)
+                if not forecast_df.empty:
+                    fig.add_trace(
+                        go.Scatter(
+                            x=forecast_df["ds"],
+                            y=forecast_df["yhat"],
+                            name="Prophet forecast — experimental, not financial advice.",
+                            line=dict(color="#E71D36", dash="dash", width=2)
+                        ),
+                        row=1, col=1
+                    )
+                else:
+                    st.warning("⚠️ Could not generate Prophet forecast. Ensure you have enough historical data.")
+
         # Render the Plotly charts in Streamlit
         st.plotly_chart(fig, use_container_width=True)
         
